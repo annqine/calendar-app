@@ -1,0 +1,59 @@
+/* Темный фон, светлый текст */
+body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Заголовки */
+h2, h3 {
+    color: #58a6ff;
+}
+
+/* Инпуты и кнопки */
+input, select, button {
+    background-color: #161b22;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 5px;
+    padding: 8px;
+    margin: 5px 0;
+}
+
+button:hover {
+    background-color: #21262d;
+    cursor: pointer;
+}
+
+/* Контейнер для событий */
+#events, #calendars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Карточка события / календаря */
+.event-card, .calendar-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 200px;
+    max-width: 250px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.event-card:hover, .calendar-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 10px #58a6ff;
+}
+
+/* Владелец и участники */
+.participants, .owner {
+    font-size: 0.85em;
+    color: #8b949e;
+}

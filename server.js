@@ -10,6 +10,10 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 const User = require("./models/User");
 const Calendar = require("./models/Calendar");
+const PORT = 3000;
+
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
 
@@ -19,10 +23,6 @@ console.log("Старт файла");
 mongoose.connect("mongodb://127.0.0.1:27017/calendar")
     .then(() => console.log("MongoDB connected"))
     .catch(err => console.log(err));
-
-app.listen(3000, () => {
-    console.log("Server started on http://localhost:3000");
-});
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -40,6 +40,26 @@ app.post("/events", async (req, res) => {
 
     await newEvent.save();
     res.json(newEvent);
+});
+
+const server = http.createServer(app);
+const io = new Server(server);
+
+io.on("connection", (socket) => {
+    console.log("Пользователь подключился:", socket.id);
+
+    socket.on("joinCalendar", (calendarId) => {
+        socket.join(calendarId);
+        console.log(`Пользователь ${socket.id} присоединился к календарю ${calendarId}`);
+    });
+
+    socket.on("newEvent", (event) => {
+        io.to(event.calendarId).emit("receiveEvent", event);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server started on http://localhost:${PORT}`);
 });
 
 app.get("/", (req, res) => {
@@ -80,11 +100,13 @@ app.post("/login", async (req, res) => {
 // создать календарь
 app.post("/calendars", async (req, res) => {
     const { name, ownerId } = req.body;
+    console.log("Создаём календарь:", req.body);
     if (!name || !ownerId) return res.status(400).json({ message: "Нужно имя и id владельца" });
 
     const calendar = new Calendar({ name, ownerId, participants: [{ userId: ownerId, role: "edit" }] });
     await calendar.save();
     res.json(calendar);
+    
 });
 
 // получить все календари пользователя
