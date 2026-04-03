@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Мои календари</title>
+</head>
+
+<body>
+    <h2>Мои календари</h2>
+
+    <input type="text" id="calendarName" placeholder="Название календаря">
+    <button onclick="createCalendar()">Создать календарь</button>
+
+    <h3>Список календарей:</h3>
+    <div id="calendars"></div>
+
+    <script>
+        
+        async function loadCalendars() {
+            const userId = localStorage.getItem("userId"); // получаем id пользователя из login
+            if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
+            const res = await fetch("/calendars/" + userId);
+            const data = await res.json();
+            const container = document.getElementById("calendars");
+            container.innerHTML = "";
+            data.forEach(cal => {
+                container.innerHTML += `<div><b>${cal.name}</b> (id: ${cal._id})</div>`;
+            });
+        }
+
+        async function createCalendar() {
+            const name = document.getElementById("calendarName").value;
+            if (!name) return alert("Введите название календаря");
+
+            const res = await fetch("/calendars", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, ownerId: userId })
+            });
+            const data = await res.json();
+            document.getElementById("calendarName").value = "";
+            loadCalendars();
+        }
+
+        loadCalendars();
+    </script>
+</body>
+
+<h3>Добавить участника:</h3>
+<input type="text" id="participantEmail" placeholder="Email пользователя">
+<select id="participantRole">
+    <option value="view">Только просмотр</option>
+    <option value="edit">Редактирование</option>
+</select>
+<input type="text" id="calendarIdInput" placeholder="ID календаря">
+<button onclick="addParticipant()">Добавить участника</button>
+<div id="participantMessage"></div>
+
+<script>
+    async function addParticipant() {
+        const email = document.getElementById("participantEmail").value;
+        const role = document.getElementById("participantRole").value;
+        const calendarId = document.getElementById("calendarIdInput").value;
+
+        if (!email || !calendarId) return alert("Введите email и ID календаря");
+
+        const res = await fetch(`/calendars/${calendarId}/add-participant`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, role })
+        });
+
+        const data = await res.json();
+        document.getElementById("participantMessage").innerText = data.message;
+        loadCalendars(); // обновляем список календарей
+    }
+</script>
+
+</html>
