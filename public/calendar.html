@@ -43,6 +43,26 @@
         // подключаемся к комнате календаря
         if (calendarId) socket.emit("joinCalendar", calendarId);
 
+
+        async function loadEvents() {
+            const res = await fetch("/events?calendarId=" + calendarId);
+            const events = await res.json();
+
+            const container = document.getElementById("events");
+            container.innerHTML = ""; // очищаем старые события
+
+            events.forEach(event => {
+                const div = document.createElement("div");
+                div.className = "event-card";
+                div.innerHTML = `
+            <b>${event.date}</b> ${new Date(event.createdAt).toLocaleTimeString()}<br>
+            <div class="owner">Владелец: ${event.ownerId?.email || "не указан"}</div>
+            <div class="participants">Участники: ${event.participants?.join(", ") || "-"}</div>
+            <div class="text">${event.text}</div>`;
+                container.appendChild(div);
+            });
+        }
+
         // создание события
         async function addEvent() {
             const date = document.getElementById("date").value;
@@ -59,24 +79,13 @@
 
             document.getElementById("text").value = "";
             socket.emit("newEvent", event);
+            loadEvents();
         }
 
-        // получение новых событий в реальном времени
+        // слушаем новые события через сокеты
         socket.on("receiveEvent", (event) => {
-            addEventCard(event);
+            loadEvents();
         });
-
-        function addEventCard(event) {
-            const container = document.getElementById("events");
-            const div = document.createElement("div");
-            div.className = "event-card";
-            div.innerHTML = `
-            <b>${event.date}</b>: ${event.text}
-            <div class="owner">Владелец: ${event.owner || "не указан"}</div>
-            <div class="participants">Участники: ${event.participants ? event.participants.join(", ") : "-"}</div>
-        `;
-            container.appendChild(div);
-        }
 
         // загрузка календарей пользователя
         async function loadCalendars() {
@@ -91,7 +100,11 @@
             data.forEach(cal => {
                 const card = document.createElement("div");
                 card.className = "calendar-card";
-                card.innerHTML = `<b>${cal.name}</b> (id: ${cal._id})`;
+                card.innerHTML = `
+                        <b>${cal.name}</b> (id: ${cal._id})
+                        <button onclick="showParticipants('${cal._id}')">Участники</button>
+                        <button onclick="showOwner('${cal.ownerId}')">Владелец</button>
+                        <button onclick="selectCalendar('${cal._id}')">Добавить запись</button>`;
 
                 // клик по календарю — выбираем его
                 card.onclick = () => {
@@ -108,6 +121,20 @@
 
                 container.appendChild(card);
             });
+        }
+
+        function showParticipants(calendarId) {
+            alert("Показываем участников календаря " + calendarId);
+        }
+
+        function showOwner(ownerId) {
+            alert("Владелец: " + ownerId);
+        }
+
+        function selectCalendar(calendarId) {
+            localStorage.setItem("currentCalendarId", calendarId);
+            socket.emit("joinCalendar", calendarId);
+            loadEvents();
         }
 
         async function createCalendar() {
@@ -146,6 +173,7 @@
         }
 
         loadCalendars();
+        loadEvents();
     </script>
 </body>
 

@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
 
 const EventSchema = new mongoose.Schema({
-    date: String,      // дата
-    text: String,      // заметка
-    image: String      // имя файла картинки
+    calendarId: { type: mongoose.Schema.Types.ObjectId, ref: "Calendar" },
+    date: String,
+    text: String,
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    type: { type: String, default: "text" }, // text или image
+    url: String, // для фото
+    createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("Event", EventSchema);

@@ -28,18 +28,30 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/events", async (req, res) => {
-    const events = await Event.find();
+    const calendarId = req.query.calendarId; // передаем ID календаря через URL
+    if (!calendarId) return res.status(400).json({ message: "calendarId не передан" });
+
+    const events = await Event.find({ calendarId })
+        .populate("ownerId", "email"); // добавляем email владельца
+
     res.json(events);
 });
 
 app.post("/events", async (req, res) => {
+    const { calendarId, date, text, ownerId } = req.body;
     const newEvent = new Event({
-        date: req.body.date,
-        text: req.body.text
+        calendarId,
+        date,
+        text,
+        ownerId,
+        type: req.body.type || "text",
+        url: req.body.url || ""
     });
 
     await newEvent.save();
     res.json(newEvent);
+
+    io.to(calendarId).emit("receiveEvent", newEvent);
 });
 
 const server = http.createServer(app);

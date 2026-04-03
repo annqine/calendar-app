@@ -16,134 +16,62 @@
     <button onclick="createCalendar()">Создать календарь</button>
 
     <h3>Список календарей:</h3>
-    <div id="calendars"></div>
+<div id="calendars-container" class="calendars-grid"></div>
+
 <script>
-        const socket = io();
+async function loadCalendars() {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return alert("Ошибка: userId не найден");
 
-        // присоединяемся к комнате текущего календаря
-        const calendarId = localStorage.getItem("currentCalendarId");
-        socket.emit("joinCalendar", calendarId);
+    const res = await fetch("/calendars/" + userId);
+    const calendars = await res.json();
 
-        // при добавлении нового события
-        async function addEvent() {
-            const date = document.getElementById("date").value;
-            const text = document.getElementById("text").value;
-            if (!date || !text) return alert("Введите дату и текст");
+    const container = document.getElementById("calendars-container");
+    container.innerHTML = "";
 
-            const event = { calendarId, date, text };
+    calendars.forEach(cal => {
+        const card = document.createElement("div");
+        card.className = "calendar-card";
 
-            // сохраняем событие в базе
-            await fetch("/events", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(event)
-            });
+        card.innerHTML = `
+            <h3>${cal.name}</h3>
+            <div class="buttons">
+                <button onclick="showParticipants('${cal._id}', event)">Участники</button>
+                <button onclick="showOwner('${cal._id}', event)">Владелец</button>
+                <button onclick="addEventToCalendar('${cal._id}', event)">Добавить запись</button>
+            </div>
+        `;
 
-            document.getElementById("text").value = "";
-
-            // рассылаем событие всем участникам через socket
-            socket.emit("newEvent", event);
-        }
-
-        // получаем новые события в реальном времени
-        socket.on("receiveEvent", (event) => {
-            const container = document.getElementById("events");
-            const div = document.createElement("div");
-            div.className = "event-card";
-            div.innerHTML = `<b>${event.date}</b>: ${event.text}`;
-            container.appendChild(div);
+        // клик по самой карточке (не на кнопки) — открываем календарь
+        card.addEventListener("click", (e) => {
+            if(e.target.tagName !== "BUTTON") {
+                localStorage.setItem("currentCalendarId", cal._id);
+                window.location.href = "calendar.html";
+            }
         });
-    </script>
-    <script>
 
-        async function loadCalendars() {
-            const userId = localStorage.getItem("userId"); // получаем id пользователя из login
-            if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
-            const res = await fetch("/calendars/" + userId);
-            const data = await res.json();
-            const container = document.getElementById("calendars");
-            container.innerHTML = "";
-            data.forEach(cal => {
-                container.innerHTML += `<div><b>${cal.name}</b> (id: ${cal._id})</div>`;
-            });
-        }
+        container.appendChild(card);
+    });
+}
 
-        async function createCalendar() {
-            const name = document.getElementById("calendarName").value;
-            if (!name) return alert("Введите название календаря");
+// функции для кнопок
+function showParticipants(calendarId, e){
+    e.stopPropagation();
+    alert(`Участники календаря ${calendarId}`); // потом заменим на красивый модал
+}
 
-            const userId = localStorage.getItem("userId"); // <- добавляем сюда
-            if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
+function showOwner(calendarId, e){
+    e.stopPropagation();
+    alert(`Владелец календаря ${calendarId}`);
+}
 
-            const res = await fetch("/calendars", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, ownerId: userId })
-            });
-            const data = await res.json();
-            document.getElementById("calendarName").value = "";
-            loadCalendars();
-        }
+function addEventToCalendar(calendarId, e){
+    e.stopPropagation();
+    localStorage.setItem("currentCalendarId", calendarId);
+    window.location.href = "calendar.html"; // можно сразу открывать добавление события
+}
 
-        loadCalendars();
-    </script>
+loadCalendars();
+</script>
 </body>
-
-<h3>Добавить участника:</h3>
-<input type="text" id="participantEmail" placeholder="Email пользователя">
-<select id="participantRole">
-    <option value="view">Только просмотр</option>
-    <option value="edit">Редактирование</option>
-</select>
-<input type="text" id="calendarIdInput" placeholder="ID календаря">
-<button onclick="addParticipant()">Добавить участника</button>
-<div id="participantMessage"></div>
-
-<script>
-    async function addParticipant() {
-        const email = document.getElementById("participantEmail").value;
-        const role = document.getElementById("participantRole").value;
-        const calendarId = document.getElementById("calendarIdInput").value;
-
-        if (!email || !calendarId) return alert("Введите email и ID календаря");
-
-        const res = await fetch(`/calendars/${calendarId}/add-participant`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, role })
-        });
-
-        const data = await res.json();
-        document.getElementById("participantMessage").innerText = data.message;
-        loadCalendars(); // обновляем список календарей
-    }
-</script>
-<div id="calendars"></div>
-
-<script>
-    async function loadCalendars() {
-        const userId = localStorage.getItem("userId");
-        if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
-        const res = await fetch("/calendars/" + userId);
-        const data = await res.json();
-        const container = document.getElementById("calendars");
-        container.innerHTML = "";
-
-        data.forEach(cal => {
-            const card = document.createElement("div");
-            card.className = "calendar-card";
-            card.innerHTML = `<b>${cal.name}</b> (id: ${cal._id})`;
-
-            card.onclick = (e) => {
-                e.stopPropagation(); // чтобы не срабатывал общий клик
-                const participants = cal.participants.map(p => p.userId).join(", ");
-                alert(`Участники: ${participants}`);
-            };
-
-            container.appendChild(card);
-        });
-    }
-    loadCalendars();
-</script>
-
 </html>
