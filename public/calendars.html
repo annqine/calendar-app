@@ -6,34 +6,36 @@
     <title>Мои календари</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
-    
+
 </head>
 
 <body>
-    <h2>Мои календари</h2>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <h2>Мои календари</h2>
 
-    <input type="text" id="calendarName" placeholder="Название календаря">
-    <button onclick="createCalendar()">Создать календарь</button>
+        <input type="text" id="calendarName" placeholder="Название календаря">
+        <button onclick="createCalendar()">Создать календарь</button>
 
-    <h3>Список календарей:</h3>
-<div id="calendars-container" class="calendars-grid"></div>
+        <h3>Список календарей:</h3>
+        <div id="calendars-container" class="calendars-grid"></div>
+    </div>
+    <script>
+        async function loadCalendars() {
+            const userId = localStorage.getItem("userId");
+            if (!userId) return alert("Ошибка: userId не найден");
 
-<script>
-async function loadCalendars() {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return alert("Ошибка: userId не найден");
+            const res = await fetch("/calendars/" + userId);
+            const calendars = await res.json();
 
-    const res = await fetch("/calendars/" + userId);
-    const calendars = await res.json();
+            const container = document.getElementById("calendars-container");
+            container.innerHTML = "";
 
-    const container = document.getElementById("calendars-container");
-    container.innerHTML = "";
+            calendars.forEach(cal => {
+                const card = document.createElement("div");
+                card.className = "calendar-card";
 
-    calendars.forEach(cal => {
-        const card = document.createElement("div");
-        card.className = "calendar-card";
-
-        card.innerHTML = `
+                card.innerHTML = `
             <h3>${cal.name}</h3>
             <div class="buttons">
                 <button onclick="showParticipants('${cal._id}', event)">Участники</button>
@@ -42,36 +44,38 @@ async function loadCalendars() {
             </div>
         `;
 
-        // клик по самой карточке (не на кнопки) — открываем календарь
-        card.addEventListener("click", (e) => {
-            if(e.target.tagName !== "BUTTON") {
-                localStorage.setItem("currentCalendarId", cal._id);
-                window.location.href = "calendar.html";
-            }
-        });
+                // клик по самой карточке (не на кнопки) — открываем календарь
+                card.addEventListener("click", (e) => {
+                    if (e.target.tagName !== "BUTTON") {
+                        localStorage.setItem("currentCalendarId", cal._id);
+                        window.location.href = "calendar.html";
+                    }
+                });
 
-        container.appendChild(card);
-    });
-}
+                container.appendChild(card);
+            });
+        }
 
-// функции для кнопок
-function showParticipants(calendarId, e){
-    e.stopPropagation();
-    alert(`Участники календаря ${calendarId}`); // потом заменим на красивый модал
-}
+        // функции для кнопок
+        function showParticipants(calendarId, e) {
+            e.stopPropagation();
+            alert(`Участники календаря ${calendarId}`); // потом заменим на красивый модал
+        }
 
-function showOwner(calendarId, e){
-    e.stopPropagation();
-    alert(`Владелец календаря ${calendarId}`);
-}
+        function showOwner(calendarId, e) {
+            e.stopPropagation();
+            alert(`Владелец календаря ${calendarId}`);
+        }
 
-function addEventToCalendar(calendarId, e){
-    e.stopPropagation();
-    localStorage.setItem("currentCalendarId", calendarId);
-    window.location.href = "calendar.html"; // можно сразу открывать добавление события
-}
+        function addEventToCalendar(calendarId, e) {
+            e.stopPropagation();
+            localStorage.setItem("currentCalendarId", calendarId);
+            window.location.href = "calendar.html"; // можно сразу открывать добавление события
+        }
 
-loadCalendars();
-</script>
+        loadCalendars();
+    </script>
+    <script src="navbar.js"></script>
 </body>
+
 </html>

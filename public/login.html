@@ -8,16 +8,18 @@
 </head>
 
 <body>
-    <h2>Вход / Регистрация</h2>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <h2>Вход / Регистрация</h2>
 
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Пароль">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Пароль">
 
-    <button onclick="register()">Регистрация</button>
-    <button onclick="login()">Вход</button>
-    
-    <div id="message"></div>
-    
+        <button onclick="register()">Регистрация</button>
+        <button onclick="login()">Вход</button>
+
+        <div id="message"></div>
+    </div>
     <script>
         async function register() {
             const email = document.getElementById("email").value;
@@ -48,6 +50,7 @@
             }
         }
     </script>
+    <script src="navbar.js"></script>
 </body>
 
 </html>

@@ -9,31 +9,33 @@
 </head>
 
 <body>
-    <h2>Мои календари</h2>
+    <div id="navbar-container"></div>
+    <div class="container">
+        <h2>Мои календари</h2>
 
-    <!-- Создание календаря -->
-    <input type="text" id="calendarName" placeholder="Название календаря">
-    <button onclick="createCalendar()">Создать календарь</button>
+        <!-- Создание календаря -->
+        <input type="text" id="calendarName" placeholder="Название календаря">
+        <button onclick="createCalendar()">Создать календарь</button>
 
-    <h3>Список календарей:</h3>
-    <div id="calendars"></div>
+        <h3>Список календарей:</h3>
+        <div id="calendars"></div>
 
-    <h3>Добавить участника:</h3>
-    <input type="text" id="participantEmail" placeholder="Email пользователя">
-    <select id="participantRole">
-        <option value="view">Только просмотр</option>
-        <option value="edit">Редактирование</option>
-    </select>
-    <input type="text" id="calendarIdInput" placeholder="ID календаря">
-    <button onclick="addParticipant()">Добавить участника</button>
-    <div id="participantMessage"></div>
+        <h3>Добавить участника:</h3>
+        <input type="text" id="participantEmail" placeholder="Email пользователя">
+        <select id="participantRole">
+            <option value="view">Только просмотр</option>
+            <option value="edit">Редактирование</option>
+        </select>
+        <input type="text" id="calendarIdInput" placeholder="ID календаря">
+        <button onclick="addParticipant()">Добавить участника</button>
+        <div id="participantMessage"></div>
 
-    <h3>События календаря:</h3>
-    <input type="date" id="date">
-    <input type="text" id="text" placeholder="Заметка">
-    <button onclick="addEvent()">Добавить событие</button>
-    <div id="events"></div>
-
+        <h3>События календаря:</h3>
+        <input type="date" id="date">
+        <input type="text" id="text" placeholder="Заметка">
+        <button onclick="addEvent()">Добавить событие</button>
+        <div id="events"></div>
+    </div>
     <script>
         const socket = io();
 
@@ -175,6 +177,7 @@
         loadCalendars();
         loadEvents();
     </script>
+    <script src="navbar.js"></script>
 </body>
 
 </html>
