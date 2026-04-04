@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Мои календари</title>
+    <title>Календарь</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
+    <script src="calendarUtils.js"></script>
 </head>
 
 <body>
@@ -13,12 +14,16 @@
     <div class="container">
         <h2>Мои календари</h2>
 
-        <!-- Создание календаря -->
         <input type="text" id="calendarName" placeholder="Название календаря">
         <button onclick="createCalendar()">Создать календарь</button>
 
         <h3>Список календарей:</h3>
         <div id="calendars"></div>
+        <script>
+            window.addEventListener("DOMContentLoaded", () => {
+                loadCalendars("calendars"); // передаём ID контейнера
+            });
+        </script>
 
         <h3>Добавить участника:</h3>
         <input type="text" id="participantEmail" placeholder="Email пользователя">
@@ -36,148 +41,58 @@
         <button onclick="addEvent()">Добавить событие</button>
         <div id="events"></div>
     </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">✖</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="navbar.js"></script>
     <script>
         const socket = io();
-
-        // получаем ID текущего календаря
         const calendarId = localStorage.getItem("currentCalendarId");
-
-        // подключаемся к комнате календаря
         if (calendarId) socket.emit("joinCalendar", calendarId);
-
 
         async function loadEvents() {
             const res = await fetch("/events?calendarId=" + calendarId);
             const events = await res.json();
-
             const container = document.getElementById("events");
-            container.innerHTML = ""; // очищаем старые события
-
+            container.innerHTML = "";
             events.forEach(event => {
                 const div = document.createElement("div");
                 div.className = "event-card";
                 div.innerHTML = `
-            <b>${event.date}</b> ${new Date(event.createdAt).toLocaleTimeString()}<br>
-            <div class="owner">Владелец: ${event.ownerId?.email || "не указан"}</div>
-            <div class="participants">Участники: ${event.participants?.join(", ") || "-"}</div>
-            <div class="text">${event.text}</div>`;
+                    <b>${event.date}</b> ${new Date(event.createdAt).toLocaleTimeString()}<br>
+                    <div class="owner">Владелец: ${event.ownerId?.email || "не указан"}</div>
+                    <div class="participants">Участники: ${event.participants?.join(", ") || "-"}</div>
+                    <div class="text">${event.text}</div>
+                `;
                 container.appendChild(div);
             });
         }
 
-        // создание события
         async function addEvent() {
             const date = document.getElementById("date").value;
             const text = document.getElementById("text").value;
             if (!date || !text) return alert("Введите дату и текст");
 
-            const event = { calendarId, date, text };
-
             await fetch("/events", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(event)
+                body: JSON.stringify({ calendarId, date, text })
             });
 
             document.getElementById("text").value = "";
-            socket.emit("newEvent", event);
+            socket.emit("newEvent", { calendarId, date, text });
             loadEvents();
         }
 
-        // слушаем новые события через сокеты
-        socket.on("receiveEvent", (event) => {
-            loadEvents();
-        });
-
-        // загрузка календарей пользователя
-        async function loadCalendars() {
-            const userId = localStorage.getItem("userId");
-            if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
-
-            const res = await fetch("/calendars/" + userId);
-            const data = await res.json();
-            const container = document.getElementById("calendars");
-            container.innerHTML = "";
-
-            data.forEach(cal => {
-                const card = document.createElement("div");
-                card.className = "calendar-card";
-                card.innerHTML = `
-                        <b>${cal.name}</b> (id: ${cal._id})
-                        <button onclick="showParticipants('${cal._id}')">Участники</button>
-                        <button onclick="showOwner('${cal.ownerId}')">Владелец</button>
-                        <button onclick="selectCalendar('${cal._id}')">Добавить запись</button>`;
-
-                // клик по календарю — выбираем его
-                card.onclick = () => {
-                    localStorage.setItem("currentCalendarId", cal._id);
-                    alert(`Выбрали календарь "${cal.name}"`);
-                    socket.emit("joinCalendar", cal._id);
-                };
-
-                // подсказка по участникам
-                card.onmouseenter = () => {
-                    const participants = cal.participants.map(p => p.userId).join(", ");
-                    card.title = `Участники: ${participants}\nВладелец: ${cal.ownerId}`;
-                };
-
-                container.appendChild(card);
-            });
-        }
-
-        function showParticipants(calendarId) {
-            alert("Показываем участников календаря " + calendarId);
-        }
-
-        function showOwner(ownerId) {
-            alert("Владелец: " + ownerId);
-        }
-
-        function selectCalendar(calendarId) {
-            localStorage.setItem("currentCalendarId", calendarId);
-            socket.emit("joinCalendar", calendarId);
-            loadEvents();
-        }
-
-        async function createCalendar() {
-            const name = document.getElementById("calendarName").value;
-            if (!name) return alert("Введите название календаря");
-
-            const userId = localStorage.getItem("userId");
-            if (!userId) return alert("Ошибка: userId не найден. Войдите снова.");
-
-            const res = await fetch("/calendars", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, ownerId: userId })
-            });
-
-            document.getElementById("calendarName").value = "";
-            loadCalendars();
-        }
-
-        async function addParticipant() {
-            const email = document.getElementById("participantEmail").value;
-            const role = document.getElementById("participantRole").value;
-            const calendarId = document.getElementById("calendarIdInput").value;
-
-            if (!email || !calendarId) return alert("Введите email и ID календаря");
-
-            const res = await fetch(`/calendars/${calendarId}/add-participant`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, role })
-            });
-
-            const data = await res.json();
-            document.getElementById("participantMessage").innerText = data.message;
-            loadCalendars();
-        }
-
-        loadCalendars();
+        socket.on("receiveEvent", loadEvents);
+        loadCalendars("calendars");
         loadEvents();
     </script>
-    <script src="navbar.js"></script>
 </body>
 
 </html>

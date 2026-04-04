@@ -1,13 +1,35 @@
-/* Темный фон, светлый текст */
+/* Общий фон и текст */
 body {
-    background-color: #0d1117; /* темная тема как GitHub */
+    background-color: #0d1117;
     color: #c9d1d9;
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding-top: 60px; /* место для navbar */
 }
 
 /* Заголовки */
 h2, h3 {
     color: #58a6ff;
+}
+
+/* Контейнер */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Навбар */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #0d1117;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #30363d;
+    z-index: 100;
 }
 
 /* Инпуты и кнопки */
@@ -25,29 +47,61 @@ button:hover {
     cursor: pointer;
 }
 
-/* Контейнер для событий */
-#events, #calendars {
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 15px;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Карточка события / календаря */
-.event-card, .calendar-card {
+.modal-content {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    color: #c9d1d9;
+}
+
+.close {
+    float: right;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Сетка календарей */
+#calendars-container, #calendars {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 15px; /* расстояние между карточками */
+    margin-top: 20px;
+}
+
+/* Карточка календаря / события */
+.calendar-card, .event-card {
     background-color: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 10px;
-    min-width: 200px;
-    max-width: 250px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 5px #000;
+    cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.event-card:hover, .calendar-card:hover {
+.calendar-card:hover, .event-card:hover {
     transform: scale(1.03);
     box-shadow: 0 0 10px #58a6ff;
+}
+
+.calendar-card h3 {
+    margin-top: 0;
 }
 
 /* Владелец и участники */
@@ -56,51 +110,18 @@ button:hover {
     color: #8b949e;
 }
 
-.calendars-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.calendar-card {
-    background-color: #161b22;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 0 10px #000;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.calendar-card:hover {
-    transform: scale(1.03);
-}
-
-.calendar-card h3 {
-    margin-top: 0;
-}
-
-.container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-    width: 100%;
-}
-
-.navbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    background-color: #0d1117;
-    padding: 10px 20px;
+/* Кнопки внутри карточки */
+.calendar-buttons {
     display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #30363d;
-    z-index: 100;
-    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
-body {
-    margin: 0;
-    padding-top: 60px;
+.calendar-buttons button {
+    flex: 1 1 45%;
+    padding: 8px;
+    font-size: 14px;
+}
+* {
+    box-sizing: border-box;
 }

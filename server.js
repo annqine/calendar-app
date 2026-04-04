@@ -154,3 +154,15 @@ app.post("/calendars/:calendarId/add-participant", async (req, res) => {
 
     res.json({ message: "Пользователь добавлен", calendar });
 });
+
+app.post("/calendars/:calendarId/remove-participant", async (req, res) => {
+    const { userId } = req.body;
+    const calendar = await Calendar.findById(req.params.calendarId);
+
+    calendar.participants = calendar.participants.filter(
+        p => !p.userId.equals(userId)
+    );
+
+    await calendar.save();
+    res.json({ message: "Удалено" });
+});

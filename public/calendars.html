@@ -1,14 +1,12 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Мои календари</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
-
+    <script src="calendarUtils.js"></script>
 </head>
-
 <body>
     <div id="navbar-container"></div>
     <div class="container">
@@ -20,62 +18,27 @@
         <h3>Список календарей:</h3>
         <div id="calendars-container" class="calendars-grid"></div>
     </div>
+    <script src="navbar.js"></script>
     <script>
-        async function loadCalendars() {
+        // Создание календаря
+        async function createCalendar() {
+            const name = document.getElementById("calendarName").value;
+            if (!name) return alert("Введите название календаря");
+
             const userId = localStorage.getItem("userId");
             if (!userId) return alert("Ошибка: userId не найден");
 
-            const res = await fetch("/calendars/" + userId);
-            const calendars = await res.json();
-
-            const container = document.getElementById("calendars-container");
-            container.innerHTML = "";
-
-            calendars.forEach(cal => {
-                const card = document.createElement("div");
-                card.className = "calendar-card";
-
-                card.innerHTML = `
-            <h3>${cal.name}</h3>
-            <div class="buttons">
-                <button onclick="showParticipants('${cal._id}', event)">Участники</button>
-                <button onclick="showOwner('${cal._id}', event)">Владелец</button>
-                <button onclick="addEventToCalendar('${cal._id}', event)">Добавить запись</button>
-            </div>
-        `;
-
-                // клик по самой карточке (не на кнопки) — открываем календарь
-                card.addEventListener("click", (e) => {
-                    if (e.target.tagName !== "BUTTON") {
-                        localStorage.setItem("currentCalendarId", cal._id);
-                        window.location.href = "calendar.html";
-                    }
-                });
-
-                container.appendChild(card);
+            await fetch("/calendars", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, ownerId: userId })
             });
+
+            document.getElementById("calendarName").value = "";
+            loadCalendars("calendars-container");
         }
 
-        // функции для кнопок
-        function showParticipants(calendarId, e) {
-            e.stopPropagation();
-            alert(`Участники календаря ${calendarId}`); // потом заменим на красивый модал
-        }
-
-        function showOwner(calendarId, e) {
-            e.stopPropagation();
-            alert(`Владелец календаря ${calendarId}`);
-        }
-
-        function addEventToCalendar(calendarId, e) {
-            e.stopPropagation();
-            localStorage.setItem("currentCalendarId", calendarId);
-            window.location.href = "calendar.html"; // можно сразу открывать добавление события
-        }
-
-        loadCalendars();
+        loadCalendars("calendars-container");
     </script>
-    <script src="navbar.js"></script>
 </body>
-
 </html>
