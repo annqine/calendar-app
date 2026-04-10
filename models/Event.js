@@ -5,6 +5,7 @@ const EventSchema = new mongoose.Schema({
     date: String,
     text: String,
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     type: { type: String, default: "text" }, // text или image
     url: String, // для фото
     createdAt: { type: Date, default: Date.now }

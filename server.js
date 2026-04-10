@@ -28,12 +28,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/events", async (req, res) => {
-    const calendarId = req.query.calendarId; // передаем ID календаря через URL
+    const calendarId = req.query.calendarId;
     if (!calendarId) return res.status(400).json({ message: "calendarId не передан" });
 
     const events = await Event.find({ calendarId })
-        .populate("ownerId", "email"); // добавляем email владельца
-
+        .populate("ownerId", "email")
+        .populate("participants", "email");
+            
     res.json(events);
 });
 
@@ -130,7 +131,10 @@ app.get("/calendars/:userId", async (req, res) => {
             { ownerId: userId },
             { "participants.userId": userId }
         ]
-    });
+    })
+    .populate("ownerId", "email")
+    .populate("participants.userId", "email");
+    // console.log("CALENDARS FROM DB:", JSON.stringify(calendars, null, 2));
     res.json(calendars);
 });
 

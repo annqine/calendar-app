@@ -51,22 +51,28 @@
 
     <script src="navbar.js"></script>
     <script>
-        const socket = io();
-        const calendarId = localStorage.getItem("currentCalendarId");
-        if (calendarId) socket.emit("joinCalendar", calendarId);
 
         async function loadEvents() {
+            const calendarId = localStorage.getItem("currentCalendarId");
+
+            console.log("calendarId:", calendarId);
+
+            if (!calendarId) {
+                console.log("❌ нет календаря");
+                return;
+            }
             const res = await fetch("/events?calendarId=" + calendarId);
             const events = await res.json();
+
             const container = document.getElementById("events");
             container.innerHTML = "";
-            events.forEach(event => {
+            events.forEach(event => { 
                 const div = document.createElement("div");
                 div.className = "event-card";
                 div.innerHTML = `
                     <b>${event.date}</b> ${new Date(event.createdAt).toLocaleTimeString()}<br>
                     <div class="owner">Владелец: ${event.ownerId?.email || "не указан"}</div>
-                    <div class="participants">Участники: ${event.participants?.join(", ") || "-"}</div>
+                    <div class="participants">Участники: ${event.participants?.map(p => p.userId?.email || p.userId).join(", ") || "-"}</div>
                     <div class="text">${event.text}</div>
                 `;
                 container.appendChild(div);
@@ -77,6 +83,7 @@
             const date = document.getElementById("date").value;
             const text = document.getElementById("text").value;
             if (!date || !text) return alert("Введите дату и текст");
+            if (!calendarId) return alert("Сначала выбери календарь");
 
             await fetch("/events", {
                 method: "POST",
@@ -90,8 +97,9 @@
         }
 
         socket.on("receiveEvent", loadEvents);
-        loadCalendars("calendars");
-        loadEvents();
+        window.addEventListener("DOMContentLoaded", () => {
+            loadCalendars("calendars");
+        });
     </script>
 </body>
 

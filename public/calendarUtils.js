@@ -8,7 +8,6 @@ function copyCalendarId(id) {
     alert("ID скопирован!");
 }
 
-// Модальное окно
 function openModal(html) {
     document.getElementById("modalBody").innerHTML = html;
     document.getElementById("modal").classList.remove("hidden");
@@ -18,7 +17,6 @@ function closeModal() {
     document.getElementById("modal").classList.add("hidden");
 }
 
-// Загрузка календарей
 async function loadCalendars(containerId) {
     const userId = localStorage.getItem("userId");
     if (!userId) return alert("Ошибка: userId не найден");
@@ -29,6 +27,10 @@ async function loadCalendars(containerId) {
     container.innerHTML = "";
 
     data.forEach(cal => {
+        console.log("CALENDAR:", cal); 
+        console.log("OWNER:", cal.ownerId); 
+        console.log("TYPE ownerId:", typeof cal.ownerId);
+        console.log("OWNER RAW:", cal.ownerId);
         const card = document.createElement("div");
         card.className = "calendar-card";
 
@@ -42,23 +44,24 @@ async function loadCalendars(containerId) {
             </div>
             <div class="calendar-buttons">
                 <button onclick="showParticipants('${cal._id}', event)">Участники</button>
-                <button onclick="showOwner('${cal.ownerId}', event)">Владелец</button>
+                <button onclick='showOwner(${JSON.stringify(cal.ownerId)})'>Владелец</button>
                 <button onclick="selectCalendar('${cal._id}', event)">Добавить запись</button>
             </div>
         `;
 
-        // Клик по карточке
         card.onclick = (e) => {
             if (e.target.tagName !== "BUTTON") {
                 localStorage.setItem("currentCalendarId", cal._id);
                 window.location.href = "calendar.html";
+                alert("Календарь выбран!");
             }
         };
 
         // Подсказка по участникам
         card.onmouseenter = () => {
-            const participants = cal.participants?.map(p => p.userId).join(", ") || "-";
-            card.title = `Участники: ${participants}\nВладелец: ${cal.ownerId}`;
+            const participants = cal.participants?.map(p => p.userId.email).join(", ") || "-";
+            const owner = cal.ownerId?.email || "-";
+            card.title = `Участники: ${participants}\nВладелец: ${owner}`;
         };
 
         container.appendChild(card);
@@ -73,7 +76,7 @@ async function showParticipants(calendarId) {
 
     let html = "<h3>Участники</h3>";
     cal.participants?.forEach(p => {
-        html += `<div>${p.userId} (${p.role}) <button onclick="removeParticipant('${calendarId}','${p.userId}')">❌</button></div>`;
+        html += `<div>${p.userId.email} (${p.role}) <button onclick="removeParticipant('${calendarId}','${p.userId}')">❌</button></div>`;
     });
 
     html += `<hr>
@@ -112,14 +115,26 @@ async function removeParticipant(calendarId, userId) {
     showParticipants(calendarId);
 }
 
-// Показ владельца
-function showOwner(ownerId) {
-    openModal(`<h3>Владелец</h3><p>${ownerId}</p>`);
+function showOwner(owner) {
+    
+    if (!owner) {
+        openModal("<p>Владелец не найден</p>");
+        return;
+    }
+    owner = JSON.parse(JSON.stringify(owner)); 
+    openModal(`
+        <h3>Владелец</h3>
+        <p>
+            ${owner.email}
+            <button onclick="copyCalendarId('${owner._id}')">📋</button>
+        </p>
+        `);
 }
 
 // Выбор календаря для добавления событий
 function selectCalendar(calendarId) {
     localStorage.setItem("currentCalendarId", calendarId);
     socket.emit("joinCalendar", calendarId);
+    console.log("Выбран календарь:", calendarId);
     if (typeof loadEvents === "function") loadEvents();
 }

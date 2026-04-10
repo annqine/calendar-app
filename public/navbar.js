@@ -5,14 +5,6 @@ async function loadNavbar() {
 
     const navbarContainer = document.getElementById("navbar-container");
     navbarContainer.innerHTML = data;
-
-    document.getElementById("calendarBtn").onclick = () => {
-        window.location.href = "calendars.html";
-    };
-
-    document.getElementById("loginBtn").onclick = () => {
-        window.location.href = "login.html";
-    };
 }
 
 // переходы
