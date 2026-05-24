@@ -27,8 +27,8 @@ async function loadCalendars(containerId) {
     container.innerHTML = "";
 
     data.forEach(cal => {
-        console.log("CALENDAR:", cal); 
-        console.log("OWNER:", cal.ownerId); 
+        console.log("CALENDAR:", cal);
+        console.log("OWNER:", cal.ownerId);
         console.log("TYPE ownerId:", typeof cal.ownerId);
         console.log("OWNER RAW:", cal.ownerId);
         const card = document.createElement("div");
@@ -76,7 +76,7 @@ async function showParticipants(calendarId) {
 
     let html = "<h3>Участники</h3>";
     cal.participants?.forEach(p => {
-        html += `<div>${p.userId.email} (${p.role}) <button onclick="removeParticipant('${calendarId}','${p.userId}')">❌</button></div>`;
+        html += `<div>${p.userId.email} (${p.role}) <button onclick="removeParticipant('${calendarId}','${p.userId._id}')">❌</button></div>`;
     });
 
     html += `<hr>
@@ -104,7 +104,6 @@ async function addParticipantFromModal(calendarId) {
     showParticipants(calendarId);
 }
 
-// Удаление участника
 async function removeParticipant(calendarId, userId) {
     await fetch(`/calendars/${calendarId}/remove-participant`, {
         method: "POST",
@@ -116,12 +115,12 @@ async function removeParticipant(calendarId, userId) {
 }
 
 function showOwner(owner) {
-    
+
     if (!owner) {
         openModal("<p>Владелец не найден</p>");
         return;
     }
-    owner = JSON.parse(JSON.stringify(owner)); 
+    owner = JSON.parse(JSON.stringify(owner));
     openModal(`
         <h3>Владелец</h3>
         <p>
@@ -131,10 +130,26 @@ function showOwner(owner) {
         `);
 }
 
-// Выбор календаря для добавления событий
 function selectCalendar(calendarId) {
     localStorage.setItem("currentCalendarId", calendarId);
     socket.emit("joinCalendar", calendarId);
     console.log("Выбран календарь:", calendarId);
     if (typeof loadEvents === "function") loadEvents();
+}
+
+async function createCalendar() {
+    const name = document.getElementById("calendarName").value;
+    if (!name) return alert("Введите название календаря");
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) return alert("Ошибка: userId не найден");
+
+    await fetch("/calendars", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, ownerId: userId })
+    });
+
+    document.getElementById("calendarName").value = "";
+    loadCalendars("calendars-container");
 }

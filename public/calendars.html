@@ -8,6 +8,7 @@
     <script src="calendarUtils.js"></script>
 </head>
 <body>
+
     <div id="navbar-container"></div>
     <div class="container">
         <h2>Мои календари</h2>
@@ -20,25 +21,9 @@
     </div>
     <script src="navbar.js"></script>
     <script>
-        // Создание календаря
-        async function createCalendar() {
-            const name = document.getElementById("calendarName").value;
-            if (!name) return alert("Введите название календаря");
-
-            const userId = localStorage.getItem("userId");
-            if (!userId) return alert("Ошибка: userId не найден");
-
-            await fetch("/calendars", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, ownerId: userId })
-            });
-
-            document.getElementById("calendarName").value = "";
+        window.addEventListener("DOMContentLoaded", () => {
             loadCalendars("calendars-container");
-        }
-
-        loadCalendars("calendars-container");
+        });
     </script>
 </body>
 </html>
